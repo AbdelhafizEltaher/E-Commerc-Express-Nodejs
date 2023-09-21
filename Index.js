@@ -13,7 +13,7 @@ const OrderRouter = require('./Routers/OrderRouter')
 
 dotenv.config()
 
-mongoose.connect(process.env.DB_URL)
+mongoose.connect(process.env.DATABASE)
 mongoose.connection.on("connected", function () {
     console.log("Mongoose Connected to DB");
 })
@@ -27,6 +27,8 @@ process.on('SIGINT', async function () {
     await mongoose.connection.close()
     process.exit(0)
 })
+
+
 
 var app = express()
 app.use(morgan('dev'))
@@ -45,7 +47,7 @@ app.use("/api/KarKeeb/Order",OrderRouter)
 
 
 app.use('*', function (req, res, next) {
-    res.status(302).redirect('/not-found');
+    res.status(404).redirect('/not-found');
 });
 
 app.listen(process.env.PORT | 3000, function () {

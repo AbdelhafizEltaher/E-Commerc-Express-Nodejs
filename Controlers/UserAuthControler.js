@@ -4,36 +4,55 @@ var jwt = require('jsonwebtoken')
 
 // register Function Process
 
-async function Register(RequestData) {
-
-    var UserData = RequestData
+async function Register(req) {
     const NewUser = new User({
-        UserName: UserData.UserName,
-        Email: UserData.Email,
-        password: UserData.password,
-        FullName: UserData.FullName
+        fullName: req.fullName,
+        Email: req.Email,
+        userName: req.userName,
+        PassWord: req.PassWord,
+        Mobile: req.Mobile,
+        telphone: req.telphone
     })
     return NewUser.save()
 }
+
+
+async function RegisterAdmin(req) {
+
+    const NewUser = new User({
+        fullName: req.fullName,
+        Email: req.Email,
+        userName: req.userName,
+        PassWord: req.PassWord,
+        Mobile: req.Mobile,
+        telphone: req.telphone,
+        IsAdmin: true,
+    })
+    return NewUser.save()
+}
+
 
 // Login Function Process
 
 async function Login(RequestData) {
 
-    var UserData = RequestData
-    const StoredUser = await User.findOne({ UserName: UserData.UserName })
+    const StoredUser = await User.findOne({ userName: RequestData.userName })
     if (StoredUser === null) {
         return { status: 401, result: "InCorrect UserName" }
     }
     else {
-        const VerifyPassword = bcrypt.compareSync(UserData.password, StoredUser.password)
+        const VerifyPassword = await bcrypt.compare(RequestData.PassWord, StoredUser.PassWord)
         if (VerifyPassword === false) {
             return { status: 401, result: "InCorrect Password" }
         }
         else {
-            const { password,IsAdmin,...others } = StoredUser._doc
+
+            StoredUser.isActive = true
+            let x = await User.findByIdAndUpdate(StoredUser.id, { $set: StoredUser, }, { new: true, runValidators: true })
+
+            const { password, IsAdmin, ...others } = StoredUser._doc
             const AccessToken = jwt.sign({
-                id: StoredUser.id, IsAdmin: StoredUser.IsAdmin, FullName: StoredUser.FullName
+                id: StoredUser.id, IsAdmin: StoredUser.IsAdmin, fullName: StoredUser.fullName
             }, process.env.SECRET_KEY, {
                 expiresIn: "5h"
             })
@@ -42,4 +61,13 @@ async function Login(RequestData) {
     }
 }
 
-module.exports = { Register, Login }
+
+
+async function logOut(RequestData) {
+    const StoredUser = await User.findById(RequestData.id)
+    StoredUser.isActive = false
+    return await User.findByIdAndUpdate(StoredUser.id, { $set: StoredUser, }, { new: true, runValidators: true })
+
+}
+
+module.exports = { Register, RegisterAdmin, Login, logOut }

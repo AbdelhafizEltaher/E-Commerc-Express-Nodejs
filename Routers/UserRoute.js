@@ -14,7 +14,7 @@ router.put("/:id", VerfiyAuthorization, async function (request, response, next)
         }
         else {
             const { password, ...others } = UpdatedUser._doc
-            response.status(201).json(others)
+            response.status(200).json(others)
         }
     }
     catch (error) {
